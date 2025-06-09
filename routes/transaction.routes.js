@@ -7,7 +7,6 @@ const { DateTime } = require("luxon");
 // Get today's date in IST (YYYY-MM-DD)
 const istDateTime = DateTime.now().setZone("Asia/Kolkata").toFormat("yyyy-MM-dd HH:mm:ss");
 
-
 // ✅ POST /api/transactions — Add a new transaction
 router.post("/", verifyToken, (req, res) => {
     const {
@@ -16,20 +15,22 @@ router.post("/", verifyToken, (req, res) => {
         categoryId,
         amount,
         tax = 0,
-        description
+        description,
+        invoiceNo,
+        administeredBy
         } = req.body;
 
-    const userId = req.user.id;
+    console.log("Received transaction data:", req.body);
 
     const insertQuery = `
     INSERT INTO TRANSACTION (
-        COMPANY_ID, TRANSACTION_TYPE, CATEGORY_ID, AMOUNT, TAX, DESCRIPTION, TRANSACTION_DATE, USER_ID
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        COMPANY_ID, TRANSACTION_TYPE, CATEGORY_ID, AMOUNT, TAX, DESCRIPTION, TRANSACTION_DATE, USER_ID, INVOICE_NO
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     db.query(
     insertQuery,
-    [companyId, transactionType, categoryId, amount, tax, description, istDateTime, userId],
+    [companyId, transactionType, categoryId, amount, tax, description, istDateTime, administeredBy, invoiceNo],
     (err, result) => {
         if (err) {
         console.error("Error inserting transaction:", err);
@@ -87,27 +88,10 @@ router.get("/list/:companyId", verifyToken, (req, res) => {
   const userId = req.user.id;
   const userRole = req.user.role;
 
-//   const baseQuery = `
-//     SELECT 
-//       T.TRANSACTION_ID,
-//       T.TRANSACTION_TYPE,
-//       T.AMOUNT,
-//       T.TAX,
-//       T.DESCRIPTION,
-//       T.TRANSACTION_DATE,
-//       C.CATEGORY_NAME,
-//       U.USERNAME AS ADMINISTERED_BY
-//     FROM TRANSACTION T
-//     JOIN CATEGORY C ON T.CATEGORY_ID = C.CATEGORY_ID
-//     JOIN USER U ON T.USER_ID = U.USER_ID
-//     WHERE T.COMPANY_ID = ?
-//       AND MONTH(T.TRANSACTION_DATE) = MONTH(CURRENT_DATE())
-//       AND YEAR(T.TRANSACTION_DATE) = YEAR(CURRENT_DATE())
-//   `;
-
  const baseQuery = `
     SELECT 
       T.TRANSACTION_ID,
+      T.INVOICE_NO,
       T.TRANSACTION_TYPE,
       T.AMOUNT,
       T.TAX,

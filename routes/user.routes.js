@@ -36,6 +36,7 @@ router.post("/login", async (req, res) => {
       token,
       username: user.USERNAME,
       role: user.USER_ROLE_NAME,
+      id: user.USER_ID
     });
   });
 });
